@@ -25,6 +25,13 @@ class $modify(RendererPlayLayer, PlayLayer) {
         return PlayLayer::init(level, useReplay, dontCreateObjects);
     }
 
+    void onQuit() {
+        if (auto renderer = Renderer::get()) {
+            renderer->removeFromParentAndCleanup(true);
+        }
+        PlayLayer::onQuit();
+    }
+
     // This gets called from inside PlayLayer::setupHasCompleted()
     void resetLevel() {
         if (newPlayLayer) {
