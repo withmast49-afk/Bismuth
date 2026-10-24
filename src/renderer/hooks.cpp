@@ -53,7 +53,14 @@ class $modify(RendererPlayLayer, PlayLayer) {
     void updateVisibility(float dt) {
         auto timer = BProfiler::start("PlayLayer::updateVisibility");
         auto renderer = Renderer::get();
-        if (renderer && renderer->useOptimizations() && this) {
+
+        if (!renderer || !this) {
+            PlayLayer::updateVisibility(dt);
+            timer.end();
+            return;
+        }
+
+        if (renderer->useOptimizations()) {
             auto* decompThis = dynamic_cast<decomp_PlayLayer*>(this);
             if (decompThis) {
                 decompThis->optimized_updateVisibility(dt);
@@ -65,6 +72,23 @@ class $modify(RendererPlayLayer, PlayLayer) {
         PlayLayer::updateVisibility(dt);
         // ((decomp_PlayLayer*)this)->virtual_updateVisibility(dt);
         timer.end();
+    }
+
+    // crash fix: only call optimized decomp hooks when the object is a valid decomp instance
+    void safeUpdateVisibility(float dt) {
+        auto renderer = Renderer::get();
+        if (!renderer || !this)
+            return;
+
+        if (renderer->useOptimizations()) {
+            auto* decompThis = dynamic_cast<decomp_PlayLayer*>(this);
+            if (decompThis) {
+                decompThis->optimized_updateVisibility(dt);
+                return;
+            }
+        }
+
+        PlayLayer::updateVisibility(dt);
     }
 };
 
@@ -195,6 +219,44 @@ class $modify(RendererGJBaseGameLayer, GJBaseGameLayer) {
     void processRotationActions() {
         auto renderer = Renderer::get();
         if (renderer == nullptr || this == nullptr) {
+            GJBaseGameLayer::processRotationActions();
+            return;
+        }
+
+        if (renderer->useOptimizations()) {
+            auto* decompThis = dynamic_cast<decomp_GJBaseGameLayer*>(this);
+            if (decompThis) {
+                decompThis->optimized_processRotationActions();
+                return;
+            }
+        }
+
+        siphon_processRotationActions();
+    }
+
+    // final exit-crash guard: never call decomp hooks unless the instance is valid
+    void safeProcessRotationActions() {
+        auto renderer = Renderer::get();
+        if (renderer == nullptr || this == nullptr) {
+            GJBaseGameLayer::processRotationActions();
+            return;
+        }
+
+        if (renderer->useOptimizations()) {
+            auto* decompThis = dynamic_cast<decomp_GJBaseGameLayer*>(this);
+            if (decompThis) {
+                decompThis->optimized_processRotationActions();
+                return;
+            }
+        }
+
+        siphon_processRotationActions();
+    }
+
+    // crash fix: do not call the optimized rotation hook unless the instance is valid
+    void safeProcessRotationActions() {
+        auto renderer = Renderer::get();
+        if (!renderer || !this) {
             GJBaseGameLayer::processRotationActions();
             return;
         }

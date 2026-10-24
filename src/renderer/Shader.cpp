@@ -73,11 +73,8 @@ private:
 static TBuiltInResource getDefaultResources();
 
 static void removeLinesStartingWith(std::string& string, const std::string& start) {
-    usize index;
-    
-    while ((index = string.find("\n" + start)) != std::string::npos) {
-        index++;
-        usize afterIndex = index;
+    auto removeAt = [&](usize index) {
+        usize afterIndex = index + start.size();
         while (afterIndex < string.size() && string[afterIndex] != '\r' && string[afterIndex] != '\n')
             afterIndex++;
 
@@ -85,6 +82,21 @@ static void removeLinesStartingWith(std::string& string, const std::string& star
         if (afterIndex < string.size())
             newCode += string.substr(afterIndex, string.size() - afterIndex);
         string = newCode;
+    };
+
+    // Some preprocessors emit the directive at the very start of the source, while
+    // others emit it after a newline. Handle both forms and CRLF inputs.
+    while (!string.empty() && string.rfind(start, 0) == 0) {
+        usize end = start.size();
+        while (end < string.size() && string[end] != '\r' && string[end] != '\n')
+            end++;
+        string.erase(0, end);
+    }
+
+    usize index = 0;
+    while ((index = string.find("\n" + start, index)) != std::string::npos) {
+        removeAt(index + 1);
+        index = index + 1;
     }
 }
 
