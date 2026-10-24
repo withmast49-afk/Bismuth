@@ -231,9 +231,19 @@ void Renderer::generateBatchNodes() {
 }
 
 void Renderer::terminate() {
+    // Prevent draw callbacks from racing with teardown while the level is exiting.
+    currentRenderer = nullptr;
+
     if (layer) {
         for (auto batch : CCArrayExt<CCNode*>(layer->m_batchNodes))
             batch->setVisible(true);
+
+        if (layer->m_objectLayer) {
+            for (auto child : CCArrayExt<CCNode*>(layer->m_objectLayer->getChildren())) {
+                if (dynamic_cast<FinishNode*>(child))
+                    child->removeFromParentAndCleanup(true);
+            }
+        }
 
         for (auto node : batchNodes) {
             if (node && node->getParent())
@@ -265,7 +275,6 @@ void Renderer::terminate() {
         timeElapsedQuery = 0;
     }
 
-    currentRenderer = nullptr;
     enabled = false;
     differenceModeEnabled = false;
     layer = nullptr;
