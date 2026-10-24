@@ -129,7 +129,7 @@ static std::optional<std::string> preprocessShader(EShLanguage stage, const std:
     if (!isNVidiaGPU())
         removeLinesStartingWith(codeOut, "#line");
 
-    return "#version 460\n" + codeOut;
+    return "#version 450\n" + codeOut;
 }
 
 static std::optional<std::string> preprocessShader(const fs::path& path, std::string preCode, EShLanguage stage) {
