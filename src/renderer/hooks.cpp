@@ -58,15 +58,18 @@ class $modify(RendererPlayLayer, PlayLayer) {
     }
 
     void updateVisibility(float dt) {
-        auto timer = BProfiler::start("PlayLayer::updateVisibility");
         auto renderer = Renderer::get();
-
         if (!renderer) {
             PlayLayer::updateVisibility(dt);
-            timer.end();
             return;
         }
 
+        if (!renderer->isEnabled()) {
+            PlayLayer::updateVisibility(dt);
+            return;
+        }
+
+        auto timer = BProfiler::start("PlayLayer::updateVisibility");
         if (renderer->useOptimizations()) {
             auto* decompThis = dynamic_cast<decomp_PlayLayer*>(this);
             if (decompThis) {
@@ -130,8 +133,12 @@ class $modify(RendererGJBaseGameLayer, GJBaseGameLayer) {
 
     void processMoveActions() {
         auto renderer = Renderer::get();
-        if (renderer == nullptr) {
+        if (renderer == nullptr || !renderer->isEnabled()) {
             GJBaseGameLayer::processMoveActions();
+            return;
+        }
+
+        if (m_effectManager->m_unkVector6c0.empty()) {
             return;
         }
 
@@ -208,8 +215,12 @@ class $modify(RendererGJBaseGameLayer, GJBaseGameLayer) {
 
     void processRotationActions() {
         auto renderer = Renderer::get();
-        if (renderer == nullptr) {
+        if (renderer == nullptr || !renderer->isEnabled()) {
             GJBaseGameLayer::processRotationActions();
+            return;
+        }
+
+        if (m_effectManager->m_unkVector5b0.empty()) {
             return;
         }
 
@@ -226,8 +237,12 @@ class $modify(RendererGJBaseGameLayer, GJBaseGameLayer) {
 
     void processFollowActions() {
         auto renderer = Renderer::get();
-        if (renderer == nullptr) {
+        if (renderer == nullptr || !renderer->isEnabled()) {
             GJBaseGameLayer::processFollowActions();
+            return;
+        }
+
+        if (m_effectManager->m_unkVector6d8.empty()) {
             return;
         }
 
