@@ -231,8 +231,44 @@ void Renderer::generateBatchNodes() {
 }
 
 void Renderer::terminate() {
-    glDeleteQueries(1, &timeElapsedQuery);
+    if (layer) {
+        for (auto batch : CCArrayExt<CCNode*>(layer->m_batchNodes))
+            batch->setVisible(true);
+
+        for (auto node : batchNodes) {
+            if (node && node->getParent())
+                node->removeFromParentAndCleanup(true);
+        }
+        batchNodes.clear();
+
+        if (debugText && debugText->getParent())
+            debugText->removeFromParentAndCleanup(true);
+        if (debugTextOutline1 && debugTextOutline1->getParent())
+            debugTextOutline1->removeFromParentAndCleanup(true);
+        if (debugTextOutline2 && debugTextOutline2->getParent())
+            debugTextOutline2->removeFromParentAndCleanup(true);
+
+        debugText = nullptr;
+        debugTextOutline1 = nullptr;
+        debugTextOutline2 = nullptr;
+    }
+
+    shader.reset();
+    basicShader.reset();
+    cullingComputeShader.reset();
+    colorChannelBufferObject.reset();
+    gameStateBuffer.reset();
+    srbBuffer.reset();
+
+    if (timeElapsedQuery) {
+        glDeleteQueries(1, &timeElapsedQuery);
+        timeElapsedQuery = 0;
+    }
+
     currentRenderer = nullptr;
+    enabled = false;
+    differenceModeEnabled = false;
+    layer = nullptr;
     log::info("Renderer terminated");
 }
 
