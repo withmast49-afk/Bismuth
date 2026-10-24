@@ -53,10 +53,13 @@ class $modify(RendererPlayLayer, PlayLayer) {
     void updateVisibility(float dt) {
         auto timer = BProfiler::start("PlayLayer::updateVisibility");
         auto renderer = Renderer::get();
-        if (renderer && renderer->useOptimizations()) {
-            ((decomp_PlayLayer*)this)->optimized_updateVisibility(dt);
-            timer.end();
-            return;
+        if (renderer && renderer->useOptimizations() && this) {
+            auto* decompThis = dynamic_cast<decomp_PlayLayer*>(this);
+            if (decompThis) {
+                decompThis->optimized_updateVisibility(dt);
+                timer.end();
+                return;
+            }
         }
 
         PlayLayer::updateVisibility(dt);
@@ -191,15 +194,20 @@ class $modify(RendererGJBaseGameLayer, GJBaseGameLayer) {
 
     void processRotationActions() {
         auto renderer = Renderer::get();
-        if (renderer == nullptr) {
+        if (renderer == nullptr || this == nullptr) {
             GJBaseGameLayer::processRotationActions();
             return;
         }
 
-        if (renderer->useOptimizations())
-            ((decomp_GJBaseGameLayer*)this)->optimized_processRotationActions();
-        else
-            siphon_processRotationActions();
+        if (renderer->useOptimizations()) {
+            auto* decompThis = dynamic_cast<decomp_GJBaseGameLayer*>(this);
+            if (decompThis) {
+                decompThis->optimized_processRotationActions();
+                return;
+            }
+        }
+
+        siphon_processRotationActions();
     }
 
     void processFollowActions() {
